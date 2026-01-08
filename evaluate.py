@@ -389,9 +389,13 @@ def object_level_evaluate( gt, pred, image = None, features = ['area', 'roundnes
         fp_area = 0
         for pp in pred_polygons:
             pp_intersection_area = 0
-            for pgt in gt_polygons:
-                pp_intersection_area += pgt.buffer(buffer).intersection(pp).area
-            if pp_intersection_area / pp.area < th:
+            # for pgt in gt_polygons:
+            #     pp_intersection_area += pgt.buffer(buffer).intersection(pp).area
+            buffered_union = unary_union([pgt.buffer(buffer) for pgt in gt_polygons])
+            inter_buf_area = pp.intersection(buffered_union).area
+
+            #
+            if inter_buf_area / pp.area < th:
                 fp_area += (pp.area - pp_intersection_area)
 
         ol_intersection_recall = round(intersection_area / (total_gt_area + epsilon),2)
@@ -521,7 +525,7 @@ def object_level_evaluate( gt, pred, image = None, features = ['area', 'roundnes
             gt_polys = mask_to_polygons(gt[i] > 0.5)
             pred_polys = mask_to_polygons(pred[i] > 0.5)
 
-            buffer_px = 5.0  # buffer radius in PIXELS
+            buffer_px = buffer  # buffer radius in PIXELS
 
             # 5) polygon-only diagnostics panel
             ax_poly = axes[idx]
